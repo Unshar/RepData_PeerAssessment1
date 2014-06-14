@@ -1,20 +1,144 @@
 # Reproducible Research: Peer Assessment 1
+written by Unshar, June 2014
 
 
 ## Loading and preprocessing the data
+```{r loaddata, echo=TRUE}
+# Install function for required packages    
+packages<-function(x){
+  x<-as.character(match.call()[[2]])
+  if (!require(x,character.only=TRUE)){
+    install.packages(pkgs=x,repos="http://cran.r-project.org")
+    require(x,character.only=TRUE)
+  }
+}
+packages(ggplot2)
+packages(scales)
+packages(lattice)
 
+#Load data
+  dir<-getwd()
+  path<-paste(c(dir,"/activity.csv"), collapse='')
+  mydata<-read.csv(path, na.string="NA")
+```
 
 
 ## What is mean total number of steps taken per day?
+*Missing values are being ignored as directed by the assignment instructions.
 
+### Mean*
+```{r q1Mean, echo=TRUE}
+#Creates Mean to be reported
+StepsMean <-aggregate(mydata$steps, list(date=mydata$date), mean, na.rm=TRUE)
+  colnames(StepsMean) <- c("Date", "StepsMean")
+  StepsMean
+```
+### Median*
+```{r q1Meadian, echo=TRUE}
+StepsMedian <-aggregate(mydata$steps, list(date=mydata$date), median, na.rm=TRUE)
+  colnames(StepsMedian) <- c("Date", "StepsMedian")
+  StepsMedian
+```
+### Histogram*
+```{r q1Hist, echo=TRUE}
+#Aggregate steps by date
+  Summary<- aggregate(mydata$steps, list(date=mydata$date), sum, na.rm=TRUE)
+  Summary$names <- as.Date(Summary$date, format="%Y-%m-%d")
 
+#Histogram total steps bins
+  m <- ggplot(Summary, aes(x=x))
+    m + geom_histogram(binwidth = 1000, aes(fill = ..count..)) +
+    scale_fill_gradient("Days", low = "red", high = "green")+
+    ylab("Days(Count)") + xlab("Total steps")
+```
 
 ## What is the average daily activity pattern?
+```{r q2, echo=TRUE}
+IntervalsMean <-aggregate(mydata$steps, list(intervals=mydata$interval), mean, na.rm=TRUE)
+  with(IntervalsMean, plot(intervals,
+                         x, 
+                         type = "l",
+                         xlab = "Interval",
+                         ylab = "Average number of steps"))   
 
+```  
+### Which 5-min interval, on average across all the days in the dataset, contains the maximum number of steps?
+
+```{r q2answer, echo=TRUE}
+
+n <- length(IntervalsMean$x)
+  y<-sort(IntervalsMean$x,partial=n-0)[n-0]
+    x<-subset(IntervalsMean,IntervalsMean$x==y)
+      result<-x[1,1]
+```
+###  ANSWER: The interval `r result` contains the maximum number of steps (`r y`) on average across all the days in this dataset.
 
 
 ## Imputing missing values
+```{r q4NAs, echo=TRUE}
+#Number os NAs
+  x<-sum( is.na(mydata$steps) )
+```
+### The total number of missing values in the dataset is: `r x`
+According to this assignments instructions the strategy for filling in NAs does not need to be sophisticated. Since 63% of the observations are zero (against 24% non-NAs and non-zeros ad 13% NAs), the strategy selected was to replace NAs with the same value as majority of observations.
 
+```{r q4Replace NAs, echo=TRUE}
+#Replace NAs with zeros
+  mydata$steps[is.na(mydata$steps)] <- 0 
+
+#Aggregate steps by date
+  Summary<- aggregate(mydata$steps, list(date=mydata$date), sum, na.rm=TRUE)
+```
+
+### Histogram of the total number of steps taken each day
+```{r q4Hist, echo=TRUE}
+#Histogram total steps bins
+m <- ggplot(Summary, aes(x=x))
+m + geom_histogram(binwidth = 1000, aes(fill = ..count..)) +
+  scale_fill_gradient("Days", low = "red", high = "green")+
+  ylab("Days(Count)") + xlab("Total steps")
+```
+
+### Updated Mean
+```{r q4Mean, echo=TRUE}
+#Creates Mean to be reported
+StepsMean <-aggregate(mydata$steps, list(date=mydata$date), mean, na.rm=TRUE)
+  colnames(StepsMean) <- c("Date", "StepsMean")
+  StepsMean
+```
+
+### Updated Median
+```{r q4Meadian, echo=TRUE}
+StepsMedian <-aggregate(mydata$steps, list(date=mydata$date), median, na.rm=TRUE)
+  colnames(StepsMedian) <- c("Date", "StepsMedian")
+  StepsMedian
+```
 
 
 ## Are there differences in activity patterns between weekdays and weekends?
+```{r q5, echo=TRUE}
+#Create Weekday field
+  mydata$day<-weekdays(as.Date(mydata$date))
+  mydata$flagday<- ifelse(mydata$day=="Saturday"|mydata$day=="Sunday", "Weekend","Weekday")
+
+#Aggregate steps by Weekday and Interval
+  IntervalsMeanDay <-aggregate(mydata$steps, list(day=mydata$flagday, intervals=mydata$interval), mean, na.rm=TRUE)
+
+#Calculate the total mean of the two different sets (Weekend and Weekdays)
+x<-(subset(IntervalsMeanDay,IntervalsMeanDay$day=="Weekend"))
+xstepswkd<-mean(x$x)
+x<-(subset(IntervalsMeanDay,IntervalsMeanDay$day=="Weekday"))
+xstepsweek<-mean(x$x)
+    
+#plot by weekday
+  dayplot<- xyplot(x~intervals |day, data=IntervalsMeanDay, 
+                 ylim=range(IntervalsMeanDay$x),
+                 main="Average steps by intervals", 
+                 ylab="Average steps",  
+                 xlab="Intervals", type="l",
+                 par.strip.text=list(cex=0.7), 
+                 par.settings=list(axis.text=list(cex=0.7)))
+  print(dayplot)
+```  
+
+### Comment: Subject appears to move more constanly over weekends, taking an average of `r xstepswkd` steps vs `r xstepsweek` steps during the week.
