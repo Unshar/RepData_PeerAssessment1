@@ -26,27 +26,37 @@ packages(lattice)
 ## What is mean total number of steps taken per day?
 *Missing values are being ignored as directed by the assignment instructions.
 
-### Mean*
 ```{r q1Mean, echo=TRUE}
-#Creates Mean to be reported
-StepsMean <-aggregate(mydata$steps, list(date=mydata$date), mean, na.rm=TRUE)
-  colnames(StepsMean) <- c("Date", "StepsMean")
+#Aggregate steps by date and calculate mean and median
+StepsTotal <-aggregate(steps ~ date, data = mydata, sum, na.rm = T)  
+colnames(StepsTotal) <- c("Date", "Total")
+  x<-mean(StepsTotal$Total)
+  y<-median(StepsTotal$Total)
+```
+### The mean for the total number of steps for all days is `r x`.
+### The median for the total number of steps for all days is `r y`.
+
+#### Mean breakdown by day*
+```{r q1Meanbrk, echo=TRUE}
+StepsMean <-aggregate(steps ~ date, data = mydata, mean, na.rm = T) 
+  colnames(StepsMean) <- c("Date", "Mean")
   StepsMean
 ```
-### Median*
-```{r q1Meadian, echo=TRUE}
-StepsMedian <-aggregate(mydata$steps, list(date=mydata$date), median, na.rm=TRUE)
-  colnames(StepsMedian) <- c("Date", "StepsMedian")
+
+#### Median breakdown by day*
+```{r q1Meadianbrk, echo=TRUE}
+StepsMedian <-aggregate(steps ~ date, data = mydata, median, na.rm = T)
+  colnames(StepsMedian) <- c("Date", "Median")
   StepsMedian
 ```
+
 ### Histogram*
 ```{r q1Hist, echo=TRUE}
 #Aggregate steps by date
-  Summary<- aggregate(mydata$steps, list(date=mydata$date), sum, na.rm=TRUE)
-  Summary$names <- as.Date(Summary$date, format="%Y-%m-%d")
+  StepsTotal$names <- as.Date(StepsTotal$Date, format="%Y-%m-%d")
 
 #Histogram total steps bins
-  m <- ggplot(Summary, aes(x=x))
+  m <- ggplot(StepsTotal, aes(x=Total))
     m + geom_histogram(binwidth = 1000, aes(fill = ..count..)) +
     scale_fill_gradient("Days", low = "red", high = "green")+
     ylab("Days(Count)") + xlab("Total steps")
@@ -54,9 +64,9 @@ StepsMedian <-aggregate(mydata$steps, list(date=mydata$date), median, na.rm=TRUE
 
 ## What is the average daily activity pattern?
 ```{r q2, echo=TRUE}
-IntervalsMean <-aggregate(mydata$steps, list(intervals=mydata$interval), mean, na.rm=TRUE)
-  with(IntervalsMean, plot(intervals,
-                         x, 
+IntervalsMean <-aggregate(steps ~ interval, data = mydata, mean, na.rm = T)
+  with(IntervalsMean, plot(interval,
+                         steps, 
                          type = "l",
                          xlab = "Interval",
                          ylab = "Average number of steps"))   
@@ -66,12 +76,12 @@ IntervalsMean <-aggregate(mydata$steps, list(intervals=mydata$interval), mean, n
 
 ```{r q2answer, echo=TRUE}
 
-n <- length(IntervalsMean$x)
-  y<-sort(IntervalsMean$x,partial=n-0)[n-0]
-    x<-subset(IntervalsMean,IntervalsMean$x==y)
+n <- length(IntervalsMean$steps)
+  y<-sort(IntervalsMean$steps,partial=n-0)[n-0]
+    x<-subset(IntervalsMean,IntervalsMean$steps==y)
       result<-x[1,1]
 ```
-###  ANSWER: The interval `r result` contains the maximum number of steps (`r y`) on average across all the days in this dataset.
+###  ANSWER: The `r result`th interval contains the maximum number of steps (`r y`) on average across all the days in this dataset.
 
 
 ## Imputing missing values
@@ -86,31 +96,33 @@ According to this assignments instructions the strategy for filling in NAs does 
 #Replace NAs with zeros
   mydata$steps[is.na(mydata$steps)] <- 0 
 
-#Aggregate steps by date
-  Summary<- aggregate(mydata$steps, list(date=mydata$date), sum, na.rm=TRUE)
+##Aggregate steps by date and calculate mean and median
+  StepsTotal <-aggregate(steps ~ date, data = mydata, sum, na.rm = T)  
+colnames(StepsTotal) <- c("Date", "Total")
+  x<-mean(StepsTotal$Total)
+  y<-median(StepsTotal$Total)
 ```
 
 ### Histogram of the total number of steps taken each day
 ```{r q4Hist, echo=TRUE}
 #Histogram total steps bins
-m <- ggplot(Summary, aes(x=x))
-m + geom_histogram(binwidth = 1000, aes(fill = ..count..)) +
-  scale_fill_gradient("Days", low = "red", high = "green")+
-  ylab("Days(Count)") + xlab("Total steps")
+  m <- ggplot(StepsTotal, aes(x=Total))
+    m + geom_histogram(binwidth = 1000, aes(fill = ..count..)) +
+    scale_fill_gradient("Days", low = "red", high = "green")+
+    ylab("Days(Count)") + xlab("Total steps")
 ```
 
-### Updated Mean
-```{r q4Mean, echo=TRUE}
-#Creates Mean to be reported
-StepsMean <-aggregate(mydata$steps, list(date=mydata$date), mean, na.rm=TRUE)
-  colnames(StepsMean) <- c("Date", "StepsMean")
+#### Updated Mean breakdown by day
+```{r q4Meanbrk, echo=TRUE}
+StepsMean <-aggregate(steps ~ date, data = mydata, mean, na.rm = T) 
+  colnames(StepsMean) <- c("Date", "Mean")
   StepsMean
 ```
 
-### Updated Median
-```{r q4Meadian, echo=TRUE}
-StepsMedian <-aggregate(mydata$steps, list(date=mydata$date), median, na.rm=TRUE)
-  colnames(StepsMedian) <- c("Date", "StepsMedian")
+#### Updated Median breakdown by day
+```{r q4Meadianbrk, echo=TRUE}
+StepsMedian <-aggregate(steps ~ date, data = mydata, median, na.rm = T)
+  colnames(StepsMedian) <- c("Date", "Median")
   StepsMedian
 ```
 
